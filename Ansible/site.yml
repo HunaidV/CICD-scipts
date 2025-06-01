@@ -1,0 +1,51 @@
+---
+- name: Install Jenkins on Amazon Linux 2023
+  hosts: awsjenkins
+  become: yes
+
+  tasks:
+    - name: Install required dependencies
+      yum:
+        name:
+          - java-17-amazon-corretto
+          - git
+          - wget
+        state: present
+
+    - name: Add Jenkins repo
+      get_url:
+        url: https://pkg.jenkins.io/redhat-stable/jenkins.repo
+        dest: /etc/yum.repos.d/jenkins.repo
+
+    - name: Import Jenkins GPG key
+      rpm_key:
+        state: present
+        key: https://pkg.jenkins.io/redhat-stable/jenkins.io-2023.key
+
+    - name: Install Jenkins
+      yum:
+        name: jenkins
+        state: present
+
+    - name: Enable and start Jenkins
+      systemd:
+        name: jenkins
+        enabled: yes
+        state: started
+
+    - name: Install firewalld and required Python libraries
+      yum:
+        name:
+          - firewalld
+          - python3-dbus
+          - python3-firewall
+        state: present
+
+    - name: Show initial Jenkins admin password
+      shell: cat /var/lib/jenkins/secrets/initialAdminPassword
+      register: jenkins_password
+      changed_when: false
+
+    - name: Display Jenkins initial admin password
+      debug:
+        msg: "Initial Jenkins Admin Password: {{ jenkins_password.stdout }}"

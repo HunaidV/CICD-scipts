@@ -1,0 +1,31 @@
+---
+- name: Install Docker on Amazon Linux 2023
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Install Docker from Amazon Linux 2023 repository
+      dnf:
+        name: docker
+        state: latest
+
+    - name: Start and enable Docker
+      systemd:
+        name: docker
+        enabled: yes
+        state: started
+
+    - name: Add ec2-user to docker group
+      user:
+        name: ec2-user
+        groups: docker
+        append: yes
+
+    - name: Display Docker version
+      command: docker --version
+      register: docker_version
+      changed_when: false
+
+    - name: Show installed Docker version
+      debug:
+        msg: "{{ docker_version.stdout }}"
